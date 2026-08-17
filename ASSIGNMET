@@ -1,0 +1,303 @@
+public class Membership : BaseEntity
+{
+    public Member Member { get; set; }
+    public int MemberId { get; set; }
+
+    public Plan Plan { get; set; }
+    public int PlanId { get; set; }
+
+    public DateTime EndDate { get; set; }
+}
+public Member Member { get; set; }
+public int MemberId { get; set; }
+
+public Plan Plan { get; set; }
+public int PlanId { get; set; }
+using GymManagment.DAL.Models;
+
+namespace GymManagment.DAL.Repositories.Interfaces
+{
+    public interface IGenericRepository<TEntity>
+        where TEntity : BaseEntity, new()
+    {
+        // GetById
+
+        // Add
+
+        // Update
+    }
+}
+public class GenericRepository<TEntity>
+    : IGenericRepository<TEntity>
+    where TEntity : BaseEntity, new()
+{
+    private readonly GymDbContext _dbContext;
+
+    public GenericRepository(GymDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+}
+public class PlanRepository : IPlanRepository
+{
+    private readonly GymDbContext dbContext;
+
+    public PlanRepository(GymDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
+    public async Task<int> AddAsync(
+        Plan plan,
+        CancellationToken ct = default)
+    {
+        dbContext.Plans.Add(plan);
+
+        return await dbContext.SaveChangesAsync(ct);
+    }
+}
+using Microsoft.AspNetCore.Mvc;
+
+namespace GymG01.PL.Controllers
+{
+    public class MembersController : Controller
+    {
+        #region Get Members
+
+        // GET: BaseUrl/Members/Index
+        // List All Members
+
+        // GET: BaseUrl/Members/Details/{id}
+        // Get Specific Member
+
+        // GET: BaseUrl/Members/HealthRecordDetails/{id}
+
+        #endregion
+
+        #region Create
+
+        // GET: BaseUrl/Members/Create
+        // Show Empty Form
+
+        // POST: BaseUrl/Members/Create/{member}
+        // Submit Form
+
+        #endregion
+
+        #region Edit
+
+        // GET: BaseUrl/Members/Edit/{id}
+
+        // POST: BaseUrl/Members/Edit/{id}
+
+        #endregion
+
+        #region Delete
+
+        // POST: BaseUrl/Members/Delete/{id}
+
+        #endregion
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}
+using GymManagment.DAL.Models;
+
+namespace GymManagment.BLL.Services.Interfaces
+{
+    public interface IMemberService
+    {
+        Task<IEnumerable<MemberViewModel>> GetAllAsync(
+            CancellationToken ct = default);
+    }
+}
+public class MemberService : IMemberService
+{
+    private readonly IGenericRepository<Member> repository;
+
+    public MemberService(
+        IGenericRepository<Member> repository)
+    {
+        this.repository = repository;
+    }
+
+    public async Task<IEnumerable<MemberViewModel>> GetAllAsync(
+        CancellationToken ct = default)
+    {
+        // Get members from database
+        // Map Member to MemberViewModel
+
+        return new List<MemberViewModel>();
+    }
+}
+public class MembersController : Controller
+{
+    private readonly IMemberService _memberService;
+
+    public MembersController(IMemberService memberService)
+    {
+        _memberService = memberService;
+    }
+
+    public async Task<IActionResult> Index(
+        CancellationToken ct)
+    {
+        var members =
+            await _memberService.GetAllAsync(ct);
+
+        return View(members);
+    }
+}
+List<MemberViewModel> memberVM =
+    new List<MemberViewModel>();
+
+foreach (var member in members)
+{
+    var memberVM = new MemberViewModel()
+    {
+        Name = member.Name,
+        Phone = member.Phone,
+        Photo = member.Photo,
+        Email = member.Email,
+        Id = member.Id,
+        Gender = member.Gender.ToString()
+    };
+
+    memberVM.Add(memberVM);
+}
+
+return memberVM;
+public interface IMemberService
+{
+    Task<IEnumerable<MemberViewModel>> GetAllAsync(
+        CancellationToken ct = default);
+
+    Task<bool> CreateMemberAsync(
+        Member member,
+        CancellationToken ct = default);
+}
+public class HealthRecordViewModel
+{
+    [Range(0.1, 300,
+        ErrorMessage = "Height must be greater than 0")]
+    public decimal Height { get; set; }
+
+    [Range(0.1, 500,
+        ErrorMessage = "Weight must be greater than 0")]
+    public decimal Weight { get; set; }
+
+    [Required(ErrorMessage = "Blood Type is Required")]
+    [StringLength(3,
+        ErrorMessage = "Blood Type is 3 characters or less")]
+    public string BloodType { get; set; } = default!;
+
+    public string? Note { get; set; }
+}public class HealthRecordViewModel
+{
+    [Range(0.1, 300,
+        ErrorMessage = "Height must be greater than 0")]
+    public decimal Height { get; set; }
+
+    [Range(0.1, 500,
+        ErrorMessage = "Weight must be greater than 0")]
+    public decimal Weight { get; set; }
+
+    [Required(ErrorMessage = "Blood Type is Required")]
+    [StringLength(3,
+        ErrorMessage = "Blood Type is 3 characters or less")]
+    public string BloodType { get; set; } = default!;
+
+    public string? Note { get; set; }
+}public async Task<bool> CreateMemberAsync(
+    CreateMemberViewModel model,
+    CancellationToken ct = default)
+{
+    var emailExist =
+        await _memberRepo.AnyAsync(
+            x => x.Email == model.Email);
+
+    var phoneExist =
+        await _memberRepo.AnyAsync(
+            x => x.Phone == model.Phone);
+
+    if (emailExist || phoneExist)
+        return false;
+
+    var member = new Member()
+    {
+        Name = model.Name,
+        Email = model.Email,
+        Phone = model.Phone,
+        Gender = model.Gender,
+        DateOfBirth = model.DateOfBirth
+    };
+
+    // create member
+
+    return true;
+}
+[HttpPost]
+public async Task<IActionResult> CreateMember(
+    CreateMemberViewModel model,
+    CancellationToken ct)
+{
+    if (!ModelState.IsValid)
+        return View(nameof(Create), model);
+
+    var result =
+        await _memberService.CreateMemberAsync(model, ct);
+
+    return RedirectToAction(nameof(Index));
+}
+<div class="col-md-6">
+    <label asp-for="Name"></label>
+    <input asp-for="Name"
+           type="text"
+           class="form-control" />
+</div>
+
+<div class="col-md-6">
+    <label asp-for="Email"></label>
+    <input asp-for="Email"
+           type="text"
+           class="form-control" />
+</div>
+
+<div class="col-md-6">
+    <label asp-for="Phone"></label>
+    <input asp-for="Phone"
+           type="text"
+           class="form-control" />
+</div>
+
+<div class="col-md-6">
+    <label asp-for="DateOfBirth"></label>
+    <input asp-for="DateOfBirth"
+           type="date"
+           class="form-control" />
+</div>
+
+<div class="col-md-6">
+    <label asp-for="Gender"></label>
+    <select asp-for="Gender"
+            class="form-select">
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+</div>
+public IActionResult Index()
+{
+    ViewBag.Message = "Hello";
+
+    ViewData["Message"] = "Hello";
+
+    TempData["Message"] = "Hello";
+
+    return View();
+}
+
+
